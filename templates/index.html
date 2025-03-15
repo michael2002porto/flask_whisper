@@ -13,7 +13,9 @@
                 Speech-to-Text</h2>
             <div
                 class="flex flex-col justify-center items-center rounded-lg bg-white shadow-xl shadow-black/5 ring-1 ring-slate-700/10">
-                <div class="flex flex-row space-x-2 py-2 w-full px-2"><button
+                <input type="file" id="fileInput" accept=".mp3" class="hidden">
+                <div class="flex flex-row space-x-2 py-2 w-full px-2">
+                    <button id="uploadButton"
                         class="flex items-center justify-center rounded-lg p-2 bg-blue text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition-all duration-200">
                         <div class="w-7 h-7"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                 stroke-width="1.5" stroke="currentColor">
@@ -23,7 +25,8 @@
                             </svg></div>
                         <div class="ml-2 break-text text-center text-md w-30">From file</div>
                     </button>
-                    <div class="w-[1px] bg-slate-200"></div><button
+                    <div class="w-[1px] bg-slate-200"></div>
+                    <button id="recordButton"
                         class="flex items-center justify-center rounded-lg p-2 bg-blue text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition-all duration-200">
                         <div class="w-7 h-7"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                 stroke-width="1.5" stroke="currentColor">
@@ -38,10 +41,86 @@
                     <div class="bg-blue-600 h-1 rounded-full transition-all duration-100" style="width: 0%;"></div>
                 </div>
             </div>
+
+            <!-- Hidden playback and transcribe sections -->
+            <div id="playback" class="flex relative z-10 p-4 w-full hidden">
+                <audio id="audioPlayer" controls
+                    class="w-full h-14 rounded-lg bg-white shadow-xl shadow-black/5 ring-1 ring-slate-700/10">
+                    <source id="audioSource" type="audio/mpeg" src="">
+                </audio>
+            </div>
+            <div id="transcribe" class="relative w-full flex justify-center items-center hidden">
+                <button
+                    class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center mr-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 inline-flex items-center">
+                    Transcribe Audio
+                </button>
+            </div>
+
             <div class="w-full flex flex-col my-2 p-4 max-h-[20rem] overflow-y-auto"></div>
         </div>
         <div class="absolute bottom-4">By <a class="underline" href="https://github.com/xenova/transformers.js">🤗
                 Transformers.js</a></div>
     </div>
 </div>
+{% endblock %}
+
+{% block script %}
+<script>
+    let mediaRecorder;
+    let audioChunks = [];
+
+    // Handle file upload
+    document.getElementById("uploadButton").addEventListener("click", function () {
+        document.getElementById("fileInput").click();
+    });
+
+    document.getElementById("fileInput").addEventListener("change", function (event) {
+        if (event.target.files.length > 0) {
+            let file = event.target.files[0];
+            let fileURL = URL.createObjectURL(file);
+            updateAudioPlayer(fileURL);
+        }
+    });
+
+    // Handle audio recording
+    document.getElementById("recordButton").addEventListener("click", async function () {
+        if (!mediaRecorder || mediaRecorder.state === "inactive") {
+            startRecording();
+        } else {
+            stopRecording();
+        }
+    });
+
+    async function startRecording() {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+
+        mediaRecorder.ondataavailable = event => {
+            audioChunks.push(event.data);
+        };
+
+        mediaRecorder.onstop = () => {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/mpeg' });
+            const audioUrl = URL.createObjectURL(audioBlob);
+            updateAudioPlayer(audioUrl);
+            audioChunks = []; // Reset chunks
+        };
+
+        mediaRecorder.start();
+        document.getElementById("recordButton").innerHTML = "Stop Recording ⏹️";
+    }
+
+    function stopRecording() {
+        mediaRecorder.stop();
+        document.getElementById("recordButton").innerHTML = "Record 🎤";
+    }
+
+    // Function to update audio player and show playback & transcribe sections
+    function updateAudioPlayer(audioUrl) {
+        document.getElementById("audioSource").src = audioUrl;
+        document.getElementById("audioPlayer").load(); // Refresh the audio player
+        document.getElementById("playback").classList.remove("hidden");
+        document.getElementById("transcribe").classList.remove("hidden");
+    }
+</script>
 {% endblock %}
