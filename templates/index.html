@@ -34,7 +34,7 @@
                                     d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z">
                                 </path>
                             </svg></div>
-                        <div class="ml-2 break-text text-center text-md w-30">Record</div>
+                        <div id="recordText" class="ml-2 break-text text-center text-md w-30">Record</div>
                     </button>
                 </div>
                 <div class="w-full bg-gray-200 rounded-full h-1 dark:bg-gray-700">
@@ -68,6 +68,8 @@
 <script>
     let mediaRecorder;
     let audioChunks = [];
+    let recordingInterval;
+    let seconds = 0;
 
     // Handle file upload
     document.getElementById("uploadButton").addEventListener("click", function () {
@@ -100,6 +102,8 @@
         };
 
         mediaRecorder.onstop = () => {
+            clearInterval(recordingInterval); // Stop timer
+            seconds = 0; // Reset timer
             const audioBlob = new Blob(audioChunks, { type: 'audio/mpeg' });
             const audioUrl = URL.createObjectURL(audioBlob);
             updateAudioPlayer(audioUrl);
@@ -107,12 +111,24 @@
         };
 
         mediaRecorder.start();
-        document.getElementById("recordButton").innerHTML = "Stop Recording ⏹️";
+        startTimer();
+        document.getElementById("recordText").innerHTML = "Stop Recording (00:00)";
+    }
+
+    function startTimer() {
+        recordingInterval = setInterval(() => {
+            seconds++;
+            let minutes = Math.floor(seconds / 60);
+            let remainingSeconds = seconds % 60;
+            let timeString = `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
+
+            document.getElementById("recordText").innerHTML = `Stop Recording (${timeString})`;
+        }, 1000);
     }
 
     function stopRecording() {
         mediaRecorder.stop();
-        document.getElementById("recordButton").innerHTML = "Record 🎤";
+        document.getElementById("recordText").innerHTML = "Record";
     }
 
     // Function to update audio player and show playback & transcribe sections
