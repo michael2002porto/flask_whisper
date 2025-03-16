@@ -2,6 +2,10 @@ from flask import Flask, render_template, url_for, request, redirect
 # from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 
+import whisper
+import tempfile
+import os
+
 app = Flask(__name__)
 # app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
 # db = SQLAlchemy(app)
@@ -60,6 +64,28 @@ def index():
 
 #     else:
 #         return render_template('update.html', task=task)
+
+@app.route('/transcribe', methods=['GET', 'POST'])
+def transcribe():
+    if request.method == 'POST':
+        try:
+            model = whisper.load_model("turbo")
+            audio_file = request.files['file']
+            if audio_file is not None:
+                # Save uploaded file to a temporary location
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_audio:
+                    temp_audio.write(audio_file.read())
+                    temp_audio_path = temp_audio.name
+
+                transcription = model.transcribe(temp_audio_path, language="id")
+                # Clean up temp file
+                os.remove(temp_audio_path)
+            return render_template('transcribe.html', task=transcription["text"])
+        except:
+            return 'There was an issue updating your task'
+
+    else:
+        return render_template('index.html')
 
 
 if __name__ == "__main__":
