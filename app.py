@@ -81,8 +81,9 @@ def transcribe():
                 # Clean up temp file
                 os.remove(temp_audio_path)
             return render_template('transcribe.html', task=transcription["text"])
-        except:
-            return 'There was an issue updating your task'
+        except Exception as error:
+            print("An error occurred:", error)
+            return 'There was an issue updating your task' + error
 
     else:
         return render_template('index.html')

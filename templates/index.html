@@ -105,8 +105,17 @@
         mediaRecorder.onstop = () => {
             clearInterval(recordingInterval); // Stop timer
             seconds = 0; // Reset timer
+
             const audioBlob = new Blob(audioChunks, { type: 'audio/mpeg' });
             const audioUrl = URL.createObjectURL(audioBlob);
+
+            // Update the file input with recorded audio
+            const file = new File([audioBlob], "recording.mp3", { type: "audio/mpeg" });
+            const fileInput = document.getElementById("fileInput");
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            fileInput.files = dataTransfer.files;
+
             updateAudioPlayer(audioUrl);
             audioChunks = []; // Reset chunks
         };
