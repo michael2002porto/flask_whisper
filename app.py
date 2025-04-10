@@ -1,92 +1,115 @@
-from flask import Flask, render_template, url_for, request, redirect
-# from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
-
+from flask import Flask, render_template, request
 import whisper
 import tempfile
 import os
+import torch
+import numpy as np
+import requests
+from tqdm import tqdm
+from transformers import BertTokenizer
+from model.multi_class_model import MultiClassModel  # Adjust if needed
+import lightning as L
 
 app = Flask(__name__)
-# app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
-# db = SQLAlchemy(app)
 
-# class Todo(db.Model):
-#     id = db.Column(db.Integer, primary_key=True)
-#     content = db.Column(db.String(200), nullable=False)
-#     date_created = db.Column(db.DateTime, default=datetime.utcnow)
+# === CONFIG ===
+CHECKPOINT_URL = "https://github.com/michael2002porto/bert_classification_indonesian_song_lyrics/releases/download/finetuned_checkpoints/original_split_synthesized.ckpt"
+CHECKPOINT_PATH = "final_checkpoint/original_split_synthesized.ckpt"
+AGE_LABELS = ["semua usia", "anak", "remaja", "dewasa"]
 
-#     def __repr__(self):
-#         return '<Task %r>' % self.id
+# === FUNCTION TO DOWNLOAD CKPT IF NEEDED ===
+def download_checkpoint_if_needed(url, save_path):
+    if not os.path.exists(save_path):
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        print(f"📥 Downloading model checkpoint from {url}...")
+        response = requests.get(url, stream=True, timeout=10)
+        if response.status_code == 200:
+            total = int(response.headers.get("content-length", 0))
+            with open(save_path, 'wb') as f, tqdm(total=total, unit='B', unit_scale=True, desc="Downloading") as pbar:
+                for chunk in response.iter_content(1024):
+                    f.write(chunk)
+                    pbar.update(len(chunk))
+            print("✅ Checkpoint downloaded!")
+        else:
+            raise Exception(f"❌ Failed to download: {response.status_code}")
+
+# === INITIAL SETUP: Download & Load Model ===
+download_checkpoint_if_needed(CHECKPOINT_URL, CHECKPOINT_PATH)
+
+# Load tokenizer
+tokenizer = BertTokenizer.from_pretrained('indolem/indobert-base-uncased')
+
+# Load model from checkpoint
+model = MultiClassModel.load_from_checkpoint(
+    CHECKPOINT_PATH,
+    n_out=4,
+    dropout=0.3,
+    lr=1e-5
+)
+model.eval()
 
 
-@app.route('/', methods=['POST', 'GET'])
+# === ROUTES ===
+
+@app.route('/', methods=['GET'])
 def index():
-    # if request.method == 'POST':
-    #     task_content = request.form['content']
-    #     new_task = Todo(content=task_content)
-
-    #     try:
-    #         db.session.add(new_task)
-    #         db.session.commit()
-    #         return redirect('/')
-    #     except:
-    #         return 'There was an issue adding your task'
-
-    # else:
-    #     tasks = Todo.query.order_by(Todo.date_created).all()
-    #     return render_template('index.html', tasks=tasks)
     return render_template('index.html')
 
 
-# @app.route('/delete/<int:id>')
-# def delete(id):
-#     task_to_delete = Todo.query.get_or_404(id)
-
-#     try:
-#         db.session.delete(task_to_delete)
-#         db.session.commit()
-#         return redirect('/')
-#     except:
-#         return 'There was a problem deleting that task'
-
-# @app.route('/update/<int:id>', methods=['GET', 'POST'])
-# def update(id):
-#     task = Todo.query.get_or_404(id)
-
-#     if request.method == 'POST':
-#         task.content = request.form['content']
-
-#         try:
-#             db.session.commit()
-#             return redirect('/')
-#         except:
-#             return 'There was an issue updating your task'
-
-#     else:
-#         return render_template('update.html', task=task)
-
-@app.route('/transcribe', methods=['GET', 'POST'])
+@app.route('/transcribe', methods=['POST'])
 def transcribe():
-    if request.method == 'POST':
-        try:
-            model = whisper.load_model("turbo")
-            audio_file = request.files['file']
-            if audio_file is not None:
-                # Save uploaded file to a temporary location
-                with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_audio:
-                    temp_audio.write(audio_file.read())
-                    temp_audio_path = temp_audio.name
+    try:
+        # Load Whisper with Indonesian language support (large / turbo)
+        # https://github.com/openai/whisper
+        whisper_model = whisper.load_model("large")
 
-                transcription = model.transcribe(temp_audio_path, language="id")
-                # Clean up temp file
-                os.remove(temp_audio_path)
-            return render_template('transcribe.html', task=transcription["text"])
-        except Exception as error:
-            print("An error occurred:", error)
-            return 'There was an issue updating your task' + error
+        audio_file = request.files['file']
+        if audio_file:
+            # Save uploaded audio to temp file
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_audio:
+                temp_audio.write(audio_file.read())
+                temp_audio_path = temp_audio.name
 
-    else:
-        return render_template('index.html')
+            # Step 1: Transcribe
+            transcription = whisper_model.transcribe(temp_audio_path, language="id")
+            os.remove(temp_audio_path)
+            transcribed_text = transcription["text"]
+
+            # Step 2: BERT Prediction
+            encoding = tokenizer.encode_plus(
+                transcribed_text,
+                add_special_tokens=True,
+                max_length=512,
+                return_token_type_ids=True,
+                padding="max_length",
+                return_attention_mask=True,
+                return_tensors='pt',
+            )
+
+            with torch.no_grad():
+                prediction = model(
+                    encoding["input_ids"],
+                    encoding["attention_mask"],
+                    encoding["token_type_ids"]
+                )
+
+            logits = prediction
+            probabilities = torch.nn.functional.softmax(logits, dim=1).cpu().numpy().flatten()
+            predicted_class = np.argmax(probabilities)
+            predicted_label = AGE_LABELS[predicted_class]
+
+            prob_results = [(label, f"{prob:.4f}") for label, prob in zip(AGE_LABELS, probabilities)]
+
+            return render_template(
+                'transcribe.html',
+                task=transcribed_text,
+                prediction=predicted_label,
+                probabilities=prob_results
+            )
+
+    except Exception as e:
+        print("Error:", e)
+        return str(e)
 
 
 if __name__ == "__main__":
