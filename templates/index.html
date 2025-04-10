@@ -51,11 +51,28 @@
             <div id="transcribe" class="relative w-full flex justify-center items-center hidden">
                 <form action="/transcribe" method="POST" enctype="multipart/form-data">
                     <input type="file" name="file" id="fileInput" accept=".mp3" class="hidden">
-                    <button type="submit"
+                    <button type="submit" id="submit"
                         class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center mr-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 inline-flex items-center">
                         Transcribe Audio
                     </button>
                 </form>
+            </div>
+            <!-- Progress Bars -->
+            <div id="progressContainer" class="w-full hidden flex flex-col space-y-2 mt-6">
+                <div>
+                    <p class="mb-1 text-sm font-medium text-gray-700">Whisper Transcription</p>
+                    <div class="w-full bg-gray-200 rounded-full h-4">
+                        <div id="whisperProgress" class="bg-blue-600 h-4 rounded-full text-white text-sm text-center"
+                            style="width: 0%">0%</div>
+                    </div>
+                </div>
+                <div>
+                    <p class="mb-1 text-sm font-medium text-gray-700">IndoBERT Prediction</p>
+                    <div class="w-full bg-gray-200 rounded-full h-4">
+                        <div id="bertProgress" class="bg-green-600 h-4 rounded-full text-white text-sm text-center"
+                            style="width: 0%">0%</div>
+                    </div>
+                </div>
             </div>
 
             <div class="w-full flex flex-col my-2 p-4 max-h-[20rem] overflow-y-auto"></div>
@@ -66,6 +83,32 @@
 {% endblock %}
 
 {% block script %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var socket = io.connect('http://' + document.domain + ':' + location.port);
+
+        socket.on('whisper_progress', function (data) {
+            const whisperBar = document.getElementById('whisperProgress');
+            whisperBar.style.width = data.progress + "%";
+            whisperBar.textContent = data.progress + "%";
+        });
+
+        socket.on('indobert_progress', function (data) {
+            const bertBar = document.getElementById('bertProgress');
+            bertBar.style.width = data.progress + "%";
+            bertBar.textContent = data.progress + "%";
+        });
+
+        socket.on('processing_time', function (data) {
+            const container = document.querySelector(".w-full.flex.flex-col.my-2");
+            const display = document.createElement("div");
+            display.className = "text-center mt-4 text-gray-600";
+            display.innerHTML = `⏱️ Total Processing Time: <strong>${data.time}</strong>`;
+            container.appendChild(display);
+        });
+    });
+</script>
 <script>
     let mediaRecorder;
     let audioChunks = [];
@@ -75,6 +118,10 @@
     // Handle file upload
     document.getElementById("uploadButton").addEventListener("click", function () {
         document.getElementById("fileInput").click();
+    });
+
+    document.getElementById("submit").addEventListener("click", function () {
+        document.getElementById("progressContainer").classList.remove("hidden"); // Show progress container
     });
 
     document.getElementById("fileInput").addEventListener("change", function (event) {
