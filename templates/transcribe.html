@@ -21,6 +21,12 @@
                 {% endfor %}
             </ul>
         </div>
+
+        {% if total_time %}
+        <div class="mt-4 text-center text-sm text-gray-500">
+            ⏱️ Total Processing Time: <strong>{{ total_time }}</strong>
+        </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

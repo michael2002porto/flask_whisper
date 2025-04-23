@@ -2,6 +2,7 @@ from flask import Flask, render_template, request
 import whisper
 import tempfile
 import os
+import time
 import torch
 import numpy as np
 import requests
@@ -63,6 +64,9 @@ def transcribe():
         # https://github.com/openai/whisper
         whisper_model = whisper.load_model("large")
 
+        # Start measuring time
+        start_time = time.time()
+
         audio_file = request.files['file']
         if audio_file:
             # Save uploaded audio to temp file
@@ -100,11 +104,17 @@ def transcribe():
 
             prob_results = [(label, f"{prob:.4f}") for label, prob in zip(AGE_LABELS, probabilities)]
 
+            # Stop timer
+            end_time = time.time()
+            total_time = end_time - start_time
+            formatted_time = f"{total_time:.2f} seconds"
+
             return render_template(
                 'transcribe.html',
                 task=transcribed_text,
                 prediction=predicted_label,
-                probabilities=prob_results
+                probabilities=prob_results,
+                total_time=formatted_time
             )
 
     except Exception as e:
