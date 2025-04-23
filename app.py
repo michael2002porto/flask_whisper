@@ -1,18 +1,16 @@
 from flask import Flask, render_template, request
-from flask_socketio import SocketIO, emit
 import whisper
 import tempfile
 import os
-import time
 import torch
 import numpy as np
 import requests
 from tqdm import tqdm
 from transformers import BertTokenizer
 from model.multi_class_model import MultiClassModel  # Adjust if needed
+import lightning as L
 
 app = Flask(__name__)
-socketio = SocketIO(app, async_mode='eventlet')
 
 # === CONFIG ===
 CHECKPOINT_URL = "https://github.com/michael2002porto/bert_classification_indonesian_song_lyrics/releases/download/finetuned_checkpoints/original_split_synthesized.ckpt"
@@ -61,80 +59,58 @@ def index():
 @app.route('/transcribe', methods=['POST'])
 def transcribe():
     try:
-        audio_file = request.files['file']
-        if not audio_file:
-            return "No audio file provided", 400
-
-        # Start measuring time
-        start_time = time.time()
-
-        # Save uploaded file temporarily
-        temp_audio_path = os.path.join(tempfile.gettempdir(), 'temp_audio.wav')
-        audio_file.save(temp_audio_path)
-
-        # === Step 1: Whisper Transcription ===
+        # Load Whisper with Indonesian language support (large / turbo)
+        # https://github.com/openai/whisper
         whisper_model = whisper.load_model("large")
 
-        # Simulate whisper progress using tqdm and emit progress to browser
-        print("\n[Whisper] Transcribing...")
-        for i in tqdm(range(100), desc="Whisper", ncols=75):
-            time.sleep(0.02)  # Simulate
-            socketio.emit('whisper_progress', {'progress': i + 1})
+        audio_file = request.files['file']
+        if audio_file:
+            # Save uploaded audio to temp file
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_audio:
+                temp_audio.write(audio_file.read())
+                temp_audio_path = temp_audio.name
 
-        transcription = whisper_model.transcribe(temp_audio_path, language="id")
-        transcribed_text = transcription["text"]
-        print("[Whisper] Done")
+            # Step 1: Transcribe
+            transcription = whisper_model.transcribe(temp_audio_path, language="id")
+            os.remove(temp_audio_path)
+            transcribed_text = transcription["text"]
 
-        # === Step 2: IndoBERT Prediction ===
-        print("\n[IndoBERT] Predicting...")
-        for i in tqdm(range(100), desc="IndoBERT", ncols=75):
-            time.sleep(0.02)
-            socketio.emit('indobert_progress', {'progress': i + 1})
-
-        encoding = tokenizer.encode_plus(
-            transcribed_text,
-            add_special_tokens=True,
-            max_length=512,
-            return_token_type_ids=True,
-            padding="max_length",
-            return_attention_mask=True,
-            return_tensors='pt',
-        )
-
-        with torch.no_grad():
-            prediction = model(
-                encoding["input_ids"],
-                encoding["attention_mask"],
-                encoding["token_type_ids"]
+            # Step 2: BERT Prediction
+            encoding = tokenizer.encode_plus(
+                transcribed_text,
+                add_special_tokens=True,
+                max_length=512,
+                return_token_type_ids=True,
+                padding="max_length",
+                return_attention_mask=True,
+                return_tensors='pt',
             )
 
-        logits = prediction
-        probabilities = torch.nn.functional.softmax(logits, dim=1).cpu().numpy().flatten()
-        predicted_class = np.argmax(probabilities)
-        predicted_label = AGE_LABELS[predicted_class]
-        prob_results = [(label, f"{prob:.4f}") for label, prob in zip(AGE_LABELS, probabilities)]
+            with torch.no_grad():
+                prediction = model(
+                    encoding["input_ids"],
+                    encoding["attention_mask"],
+                    encoding["token_type_ids"]
+                )
 
-        # Stop timer
-        end_time = time.time()
-        total_time = end_time - start_time
-        formatted_time = f"{total_time:.2f} seconds"
+            logits = prediction
+            probabilities = torch.nn.functional.softmax(logits, dim=1).cpu().numpy().flatten()
+            predicted_class = np.argmax(probabilities)
+            predicted_label = AGE_LABELS[predicted_class]
 
-        # Emit time via SocketIO to update frontend
-        socketio.emit('processing_time', {'time': formatted_time})
+            prob_results = [(label, f"{prob:.4f}") for label, prob in zip(AGE_LABELS, probabilities)]
 
-        return render_template(
-            'transcribe.html',
-            task=transcribed_text,
-            prediction=predicted_label,
-            probabilities=prob_results,
-            total_time=formatted_time
-        )
+            return render_template(
+                'transcribe.html',
+                task=transcribed_text,
+                prediction=predicted_label,
+                probabilities=prob_results
+            )
 
     except Exception as e:
-        print("❌ Error during transcription:", e)
-        return str(e), 500
+        print("Error:", e)
+        return str(e)
 
 
 if __name__ == "__main__":
-    # app.run(debug=True)
-    socketio.run(app, debug=True)
+    app.run(debug=True)
