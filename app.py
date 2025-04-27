@@ -122,5 +122,56 @@ def transcribe():
         return str(e)
 
 
+@app.route('/predict-text', methods=['POST'])
+def predict_text():
+    try:
+        user_lyrics = request.form.get('lyrics', '').strip()
+
+        if not user_lyrics:
+            return "No lyrics provided.", 400
+
+        # Start timer
+        start_time = time.time()
+
+        encoding = tokenizer.encode_plus(
+            user_lyrics,
+            add_special_tokens=True,
+            max_length=512,
+            return_token_type_ids=True,
+            padding="max_length",
+            return_attention_mask=True,
+            return_tensors='pt',
+        )
+
+        with torch.no_grad():
+            prediction = model(
+                encoding["input_ids"],
+                encoding["attention_mask"],
+                encoding["token_type_ids"]
+            )
+
+        logits = prediction
+        probabilities = torch.nn.functional.softmax(logits, dim=1).cpu().numpy().flatten()
+        predicted_class = np.argmax(probabilities)
+        predicted_label = AGE_LABELS[predicted_class]
+        prob_results = [(label, f"{prob:.4f}") for label, prob in zip(AGE_LABELS, probabilities)]
+
+        # End timer
+        end_time = time.time()
+        total_time = f"{end_time - start_time:.2f} seconds"
+
+        return render_template(
+            'transcribe.html',
+            task=user_lyrics,
+            prediction=predicted_label,
+            probabilities=prob_results,
+            total_time=total_time
+        )
+
+    except Exception as e:
+        print("❌ Error in predict-text:", e)
+        return str(e), 500
+
+
 if __name__ == "__main__":
     app.run(debug=True)
