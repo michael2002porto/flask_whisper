@@ -49,32 +49,33 @@ model = MultiClassModel.load_from_checkpoint(
 )
 model.eval()
 
+# === INITIAL SETUP: Whisper Pipeline ===
+# https://huggingface.co/openai/whisper-large-v3
+device = "cuda:0" if torch.cuda.is_available() else "cpu"
+torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
+
+model_id = "openai/whisper-large-v3"
+
+whisper_model = AutoModelForSpeechSeq2Seq.from_pretrained(
+    model_id, torch_dtype=torch_dtype, low_cpu_mem_usage=True, use_safetensors=True
+)
+whisper_model.to(device)
+
+processor = AutoProcessor.from_pretrained(model_id)
+
+pipe = pipeline(
+    "automatic-speech-recognition",
+    model=whisper_model,
+    tokenizer=processor.tokenizer,
+    feature_extractor=processor.feature_extractor,
+    chunk_length_s=10,
+    batch_size=4,  # batch size for inference - set based on your device
+    torch_dtype=torch_dtype,
+    device=device,
+)
+
 
 def whisper_api(temp_audio_path):
-    # https://huggingface.co/openai/whisper-large-v3
-    device = "cuda:0" if torch.cuda.is_available() else "cpu"
-    torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
-
-    model_id = "openai/whisper-large-v3"
-
-    model = AutoModelForSpeechSeq2Seq.from_pretrained(
-        model_id, torch_dtype=torch_dtype, low_cpu_mem_usage=True, use_safetensors=True
-    )
-    model.to(device)
-
-    processor = AutoProcessor.from_pretrained(model_id)
-
-    pipe = pipeline(
-        "automatic-speech-recognition",
-        model=model,
-        tokenizer=processor.tokenizer,
-        feature_extractor=processor.feature_extractor,
-        chunk_length_s=30,
-        batch_size=16,  # batch size for inference - set based on your device
-        torch_dtype=torch_dtype,
-        device=device,
-    )
-
     result = pipe(temp_audio_path, return_timestamps=False, generate_kwargs={"language": "indonesian"})
     print(result["text"])
     return result
