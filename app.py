@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request
-import whisper
+# import whisper
 import tempfile
 import os
 import time
@@ -7,14 +7,14 @@ import torch
 import numpy as np
 import requests
 from tqdm import tqdm
-from transformers import BertTokenizer
+from transformers import BertTokenizer, AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
 from model.multi_class_model import MultiClassModel  # Adjust if needed
-import lightning as L
 
 app = Flask(__name__)
 
 # === CONFIG ===
-CHECKPOINT_URL = "https://github.com/michael2002porto/bert_classification_indonesian_song_lyrics/releases/download/finetuned_checkpoints/original_split_synthesized.ckpt"
+# CHECKPOINT_URL = "https://github.com/michael2002porto/bert_classification_indonesian_song_lyrics/releases/download/finetuned_checkpoints/original_split_synthesized.ckpt"
+CHECKPOINT_URL = "https://huggingface.co/nenafem/original_split_synthesized/resolve/main/original_split_synthesized.ckpt?download=true"
 CHECKPOINT_PATH = "final_checkpoint/original_split_synthesized.ckpt"
 AGE_LABELS = ["semua usia", "anak", "remaja", "dewasa"]
 
@@ -50,6 +50,34 @@ model = MultiClassModel.load_from_checkpoint(
 model.eval()
 
 
+def whisper_api(temp_audio_path):
+    # https://huggingface.co/openai/whisper-large-v3
+    device = "cuda:0" if torch.cuda.is_available() else "cpu"
+    torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
+
+    model_id = "openai/whisper-large-v3"
+
+    model = AutoModelForSpeechSeq2Seq.from_pretrained(
+        model_id, torch_dtype=torch_dtype, low_cpu_mem_usage=True, use_safetensors=True
+    )
+    model.to(device)
+
+    processor = AutoProcessor.from_pretrained(model_id)
+
+    pipe = pipeline(
+        "automatic-speech-recognition",
+        model=model,
+        tokenizer=processor.tokenizer,
+        feature_extractor=processor.feature_extractor,
+        torch_dtype=torch_dtype,
+        device=device,
+    )
+
+    result = pipe(temp_audio_path, return_timestamps=False, generate_kwargs={"language": "indonesian"})
+    print(result["text"])
+    return result
+
+
 # === ROUTES ===
 
 @app.route('/', methods=['GET'])
@@ -62,7 +90,7 @@ def transcribe():
     try:
         # Load Whisper with Indonesian language support (large / turbo)
         # https://github.com/openai/whisper
-        whisper_model = whisper.load_model("large")
+        # whisper_model = whisper.load_model("large")
 
         # Start measuring time
         start_time = time.time()
@@ -75,7 +103,8 @@ def transcribe():
                 temp_audio_path = temp_audio.name
 
             # Step 1: Transcribe
-            transcription = whisper_model.transcribe(temp_audio_path, language="id")
+            # transcription = whisper_model.transcribe(temp_audio_path, language="id")
+            transcription = whisper_api(temp_audio_path)
             os.remove(temp_audio_path)
             transcribed_text = transcription["text"]
 
