@@ -1,9 +1,10 @@
 from flask import Flask, render_template, request
 # import whisper
-import tempfile
+import io
 import os
 import time
 import torch
+import torchaudio
 import numpy as np
 import requests
 from tqdm import tqdm
@@ -50,7 +51,7 @@ model = MultiClassModel.load_from_checkpoint(
 model.eval()
 
 
-def whisper_api(temp_audio_path):
+def whisper_api(input_audio):
     # https://huggingface.co/openai/whisper-large-v3
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
     torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
@@ -69,11 +70,13 @@ def whisper_api(temp_audio_path):
         model=model,
         tokenizer=processor.tokenizer,
         feature_extractor=processor.feature_extractor,
+        chunk_length_s=30,
+        batch_size=16,  # batch size for inference - set based on your device
         torch_dtype=torch_dtype,
         device=device,
     )
 
-    result = pipe(temp_audio_path, return_timestamps=False, generate_kwargs={"language": "indonesian"})
+    result = pipe(input_audio, return_timestamps=False, generate_kwargs={"language": "indonesian"})
     print(result["text"])
     return result
 
@@ -97,15 +100,18 @@ def transcribe():
 
         audio_file = request.files['file']
         if audio_file:
-            # Save uploaded audio to temp file
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_audio:
-                temp_audio.write(audio_file.read())
-                temp_audio_path = temp_audio.name
+            # Read uploaded file into memory
+            audio_bytes = audio_file.read()
+            # Load audio from bytes directly
+            waveform, sample_rate = torchaudio.load(io.BytesIO(audio_bytes))
+            # Convert to mono if it is stereo
+            waveform = waveform.mean(dim=0, keepdim=True) if waveform.shape[0] > 1 else waveform
+            # Convert waveform to numpy
+            audio_array = waveform.squeeze(0).numpy()
 
             # Step 1: Transcribe
             # transcription = whisper_model.transcribe(temp_audio_path, language="id")
-            transcription = whisper_api(temp_audio_path)
-            os.remove(temp_audio_path)
+            transcription = whisper_api({"array": audio_array, "sampling_rate": sample_rate})
             transcribed_text = transcription["text"]
 
             # Step 2: BERT Prediction
