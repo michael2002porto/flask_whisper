@@ -83,6 +83,33 @@ def whisper_api(temp_audio_path):
     return result
 
 
+def bert_predict(input_lyric):
+    encoding = tokenizer.encode_plus(
+        input_lyric,
+        add_special_tokens=True,
+        max_length=512,
+        return_token_type_ids=True,
+        padding="max_length",
+        return_attention_mask=True,
+        return_tensors='pt',
+    )
+
+    with torch.no_grad():
+        prediction = model(
+            encoding["input_ids"],
+            encoding["attention_mask"],
+            encoding["token_type_ids"]
+        )
+
+    logits = prediction
+    probabilities = torch.nn.functional.softmax(logits, dim=1).cpu().numpy().flatten()
+    predicted_class = np.argmax(probabilities)
+    predicted_label = AGE_LABELS[predicted_class]
+
+    prob_results = [(label, f"{prob:.4f}") for label, prob in zip(AGE_LABELS, probabilities)]
+    return predicted_label, prob_results
+
+
 # === ROUTES ===
 
 @app.route('/', methods=['GET'])
@@ -114,29 +141,7 @@ def transcribe():
             transcribed_text = transcription["text"]
 
             # Step 2: BERT Prediction
-            encoding = tokenizer.encode_plus(
-                transcribed_text,
-                add_special_tokens=True,
-                max_length=512,
-                return_token_type_ids=True,
-                padding="max_length",
-                return_attention_mask=True,
-                return_tensors='pt',
-            )
-
-            with torch.no_grad():
-                prediction = model(
-                    encoding["input_ids"],
-                    encoding["attention_mask"],
-                    encoding["token_type_ids"]
-                )
-
-            logits = prediction
-            probabilities = torch.nn.functional.softmax(logits, dim=1).cpu().numpy().flatten()
-            predicted_class = np.argmax(probabilities)
-            predicted_label = AGE_LABELS[predicted_class]
-
-            prob_results = [(label, f"{prob:.4f}") for label, prob in zip(AGE_LABELS, probabilities)]
+            predicted_label, prob_results = bert_predict(transcribed_text)
 
             # Stop timer
             end_time = time.time()
@@ -167,28 +172,8 @@ def predict_text():
         # Start timer
         start_time = time.time()
 
-        encoding = tokenizer.encode_plus(
-            user_lyrics,
-            add_special_tokens=True,
-            max_length=512,
-            return_token_type_ids=True,
-            padding="max_length",
-            return_attention_mask=True,
-            return_tensors='pt',
-        )
-
-        with torch.no_grad():
-            prediction = model(
-                encoding["input_ids"],
-                encoding["attention_mask"],
-                encoding["token_type_ids"]
-            )
-
-        logits = prediction
-        probabilities = torch.nn.functional.softmax(logits, dim=1).cpu().numpy().flatten()
-        predicted_class = np.argmax(probabilities)
-        predicted_label = AGE_LABELS[predicted_class]
-        prob_results = [(label, f"{prob:.4f}") for label, prob in zip(AGE_LABELS, probabilities)]
+        # Step 1: BERT Prediction
+        predicted_label, prob_results = bert_predict(user_lyrics)
 
         # End timer
         end_time = time.time()
