@@ -68,15 +68,17 @@ pipe = pipeline(
     model=whisper_model,
     tokenizer=processor.tokenizer,
     feature_extractor=processor.feature_extractor,
-    chunk_length_s=10,
-    batch_size=4,  # batch size for inference - set based on your device
+    chunk_length_s=30,
+    batch_size=32,  # batch size for inference - set based on your device
     torch_dtype=torch_dtype,
     device=device,
+    max_new_tokens=128,  # Limit text generation
+    return_timestamps=False,  # Save memory
 )
 
 
 def whisper_api(temp_audio_path):
-    result = pipe(temp_audio_path, return_timestamps=False, generate_kwargs={"language": "indonesian"})
+    result = pipe(temp_audio_path, generate_kwargs={"language": "indonesian", "task": "transcribe"})
     print(result["text"])
     return result
 
