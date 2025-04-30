@@ -51,14 +51,19 @@ model.eval()
 
 # === INITIAL SETUP: Faster Whisper ===
 # https://github.com/SYSTRAN/faster-whisper
-faster_whisper_model_size = "large-v3"
+# faster_whisper_model_size = "large-v3"
+faster_whisper_model_size = "turbo"
 
 # Run on GPU with FP16
 # model = WhisperModel(model_size, device="cuda", compute_type="float16")
 # or run on GPU with INT8
 # model = WhisperModel(model_size, device="cuda", compute_type="int8_float16")
 # or run on CPU with INT8
-faster_whisper_model = WhisperModel(faster_whisper_model_size, device="cpu", compute_type="int8")
+faster_whisper_model = WhisperModel(
+    faster_whisper_model_size,
+    device="cpu",
+    compute_type="int8"
+)
 
 
 def faster_whisper(temp_audio_path):
