@@ -49,20 +49,20 @@ model = MultiClassModel.load_from_checkpoint(
 )
 model.eval()
 
-# === INITIAL SETUP: Fast Whisper ===
+# === INITIAL SETUP: Faster Whisper ===
 # https://github.com/SYSTRAN/faster-whisper
-fast_whisper_model_size = "large-v3"
+faster_whisper_model_size = "large-v3"
 
 # Run on GPU with FP16
 # model = WhisperModel(model_size, device="cuda", compute_type="float16")
 # or run on GPU with INT8
 # model = WhisperModel(model_size, device="cuda", compute_type="int8_float16")
 # or run on CPU with INT8
-fast_whisper_model = WhisperModel(fast_whisper_model_size, device="cpu", compute_type="int8")
+faster_whisper_model = WhisperModel(faster_whisper_model_size, device="cpu", compute_type="int8")
 
 
-def fast_whisper(temp_audio_path):
-    segments, info = fast_whisper_model.transcribe(
+def faster_whisper(temp_audio_path):
+    segments, info = faster_whisper_model.transcribe(
         temp_audio_path,
         language="id",
         beam_size=1    # Lower beam_size, faster but may miss words
@@ -128,7 +128,7 @@ def transcribe():
                 temp_audio_path = temp_audio.name
 
             # Step 1: Transcribe
-            transcribed_text = fast_whisper(temp_audio_path)
+            transcribed_text = faster_whisper(temp_audio_path)
             os.remove(temp_audio_path)
 
             # Step 2: BERT Prediction
