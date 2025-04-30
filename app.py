@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request
-# import whisper
+from faster_whisper import WhisperModel
 import tempfile
 import os
 import time
@@ -7,7 +7,7 @@ import torch
 import numpy as np
 import requests
 from tqdm import tqdm
-from transformers import BertTokenizer, AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
+from transformers import BertTokenizer
 from model.multi_class_model import MultiClassModel  # Adjust if needed
 
 app = Flask(__name__)
@@ -49,38 +49,31 @@ model = MultiClassModel.load_from_checkpoint(
 )
 model.eval()
 
-# === INITIAL SETUP: Whisper Pipeline ===
-# https://huggingface.co/openai/whisper-large-v3
-device = "cuda:0" if torch.cuda.is_available() else "cpu"
-torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
+# === INITIAL SETUP: Fast Whisper ===
+# https://github.com/SYSTRAN/faster-whisper
+fast_whisper_model_size = "large-v3"
 
-model_id = "openai/whisper-large-v3"
-
-whisper_model = AutoModelForSpeechSeq2Seq.from_pretrained(
-    model_id, torch_dtype=torch_dtype, low_cpu_mem_usage=True, use_safetensors=True
-)
-whisper_model.to(device)
-
-processor = AutoProcessor.from_pretrained(model_id)
-
-pipe = pipeline(
-    "automatic-speech-recognition",
-    model=whisper_model,
-    tokenizer=processor.tokenizer,
-    feature_extractor=processor.feature_extractor,
-    chunk_length_s=30,
-    batch_size=32,  # batch size for inference - set based on your device
-    torch_dtype=torch_dtype,
-    device=device,
-    max_new_tokens=128,  # Limit text generation
-    return_timestamps=False,  # Save memory
-)
+# Run on GPU with FP16
+# model = WhisperModel(model_size, device="cuda", compute_type="float16")
+# or run on GPU with INT8
+# model = WhisperModel(model_size, device="cuda", compute_type="int8_float16")
+# or run on CPU with INT8
+fast_whisper_model = WhisperModel(fast_whisper_model_size, device="cpu", compute_type="int8")
 
 
-def whisper_api(temp_audio_path):
-    result = pipe(temp_audio_path, generate_kwargs={"language": "indonesian", "task": "transcribe"})
-    print(result["text"])
-    return result
+def fast_whisper(temp_audio_path):
+    segments, info = fast_whisper_model.transcribe(
+        temp_audio_path,
+        language="id",
+        beam_size=1    # Lower beam_size, faster but may miss words
+    )
+
+    print("Detected language '%s' with probability %f" % (info.language, info.language_probability))
+
+    for segment in segments:
+        print("[%.2fs -> %.2fs] %s" % (segment.start, segment.end, segment.text))
+
+    return segment.text
 
 
 def bert_predict(input_lyric):
@@ -135,10 +128,8 @@ def transcribe():
                 temp_audio_path = temp_audio.name
 
             # Step 1: Transcribe
-            # transcription = whisper_model.transcribe(temp_audio_path, language="id")
-            transcription = whisper_api(temp_audio_path)
+            transcribed_text = fast_whisper(temp_audio_path)
             os.remove(temp_audio_path)
-            transcribed_text = transcription["text"]
 
             # Step 2: BERT Prediction
             predicted_label, prob_results = bert_predict(transcribed_text)
