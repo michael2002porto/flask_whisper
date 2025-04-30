@@ -70,10 +70,10 @@ def faster_whisper(temp_audio_path):
 
     print("Detected language '%s' with probability %f" % (info.language, info.language_probability))
 
-    for segment in segments:
-        print("[%.2fs -> %.2fs] %s" % (segment.start, segment.end, segment.text))
+    # for segment in segments:
+    #     print("[%.2fs -> %.2fs] %s" % (segment.start, segment.end, segment.text))
 
-    return segment.text
+    return " ".join(segment.text for segment in segments)
 
 
 def bert_predict(input_lyric):
