@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block head %}
-<title>Whisper Web - Index</title>
+<title>Indonesian Lyrics Classification By Age Group - Index</title>
 {% endblock %}
 
 {% block body %}
@@ -11,7 +11,7 @@
             Classification By Age Group</h1>
         <div class="w-full flex flex-col my-2 overflow-y-auto"></div>
         <h2 class="mt-4 mb-2 px-4 text-center text-1xl font-semibold tracking-tight text-slate-900 sm:text-2xl">
-            Upload or Record Your Lyrics:</h2>
+            Upload or Record Your Lyric:</h2>
         <div
             class="mb-3 flex flex-col justify-center items-center rounded-lg bg-white shadow-xl shadow-black/5 ring-1 ring-slate-700/10">
             <div class="flex flex-row space-x-2 py-2 w-full px-2">
@@ -23,7 +23,7 @@
                                 d="M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026m-16.5 0a2.25 2.25 0 00-1.883 2.542l.857 6a2.25 2.25 0 002.227 1.932H19.05a2.25 2.25 0 002.227-1.932l.857-6a2.25 2.25 0 00-1.883-2.542m-16.5 0V6A2.25 2.25 0 016 3.75h3.879a1.5 1.5 0 011.06.44l2.122 2.12a1.5 1.5 0 001.06.44H18A2.25 2.25 0 0120.25 9v.776">
                             </path>
                         </svg></div>
-                    <div class="ml-2 break-text text-center text-md w-30">From file</div>
+                    <div class="ml-2 break-text text-center text-md w-30">From File</div>
                 </button>
                 <div class="w-[1px] bg-slate-200"></div>
                 <button id="recordButton"
@@ -67,8 +67,8 @@
         <div class="mt-4 w-full mt-8" id="input-text">
             <form action="/predict-text" method="POST" class="flex flex-col space-y-4">
                 <label for="lyricsInput"
-                    class="mb-2 text-1xl font-semibold tracking-tight text-slate-900 sm:text-2xl">Or paste your lyric
-                    here:</label>
+                    class="mb-2 text-1xl font-semibold tracking-tight text-slate-900 sm:text-2xl">Or Input Your Lyric
+                    Here:</label>
                 <textarea name="lyrics" id="lyricsInput" rows="6" required
                     class="w-full rounded-lg border border-gray-300 px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="Type or paste Indonesian lyrics..."></textarea>
