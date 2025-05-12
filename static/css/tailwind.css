@@ -529,35 +529,35 @@ video {
 @media (min-width: 640px) {
 
   .container {
-    max-width: 640px;
+    max-width: 540px;
   }
 }
 
 @media (min-width: 768px) {
 
   .container {
-    max-width: 768px;
+    max-width: 640px;
   }
 }
 
 @media (min-width: 1024px) {
 
   .container {
-    max-width: 1024px;
+    max-width: 768px;
   }
 }
 
 @media (min-width: 1280px) {
 
   .container {
-    max-width: 1280px;
+    max-width: 1024px;
   }
 }
 
 @media (min-width: 1536px) {
 
   .container {
-    max-width: 1536px;
+    max-width: 1280px;
   }
 }
 
@@ -716,7 +716,7 @@ video {
 }
 
 .min-h-screen {
-  min-height: 100vh;
+  min-height: 90vh;
 }
 
 .w-4 {
@@ -1112,9 +1112,7 @@ audio::-webkit-media-controls-panel {
 }
 
 .container {
-  width: 41rem
-    /* 656px */
-  ;
+  width: 70rem;
   max-width: 95vw;
 }
 
