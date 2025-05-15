@@ -1114,6 +1114,8 @@ audio::-webkit-media-controls-panel {
 .container {
   width: 70rem;
   max-width: 95vw;
+  margin-top: 3rem;
+  margin-bottom: 3rem;
 }
 
 .hover\:bg-blue-800:hover {

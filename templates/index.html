@@ -9,9 +9,8 @@
     <div class="container flex flex-col justify-center items-center">
         <h1 class="mb-5 text-5xl font-extrabold tracking-tight text-slate-900 sm:text-7xl text-center">Indonesian Lyrics
             Classification By Age Group</h1>
-        <div class="w-full flex flex-col my-2 overflow-y-auto"></div>
         <h2 class="mt-4 mb-2 px-4 text-center text-1xl font-semibold tracking-tight text-slate-900 sm:text-2xl">
-            Upload or Record Your Lyric:</h2>
+            Upload or Record Your Lyrics:</h2>
         <div
             class="mb-3 flex flex-col justify-center items-center rounded-lg bg-white shadow-xl shadow-black/5 ring-1 ring-slate-700/10">
             <div class="flex flex-row space-x-2 py-2 w-full px-2">
@@ -53,11 +52,11 @@
             <form action="/transcribe" method="POST" enctype="multipart/form-data">
                 <input type="file" name="file" id="fileInput" accept=".mp3" class="hidden">
                 <button type="button" onclick="showInputText()"
-                    class="text-white bg-red-500 hover:bg-red-600 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
+                    class="text-white bg-red-500 hover:bg-red-600 font-medium rounded-lg text-2xl px-5 py-2.5 text-center">
                     Cancel
                 </button>
                 <button type="submit"
-                    class="text-white bg-blue-700 hover:bg-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
+                    class="text-white bg-blue-700 hover:bg-blue-800 font-medium rounded-lg text-2xl px-5 py-2.5 text-center">
                     Predict Age Group
                 </button>
             </form>
@@ -67,14 +66,14 @@
         <div class="mt-4 w-full mt-8" id="input-text">
             <form action="/predict-text" method="POST" class="flex flex-col space-y-4">
                 <label for="lyricsInput"
-                    class="mb-2 text-1xl font-semibold tracking-tight text-slate-900 sm:text-2xl">Or Input Your Lyric
+                    class="mb-2 text-1xl font-semibold tracking-tight text-slate-900 sm:text-2xl">Or Input Your Lyrics
                     Here:</label>
                 <textarea name="lyrics" id="lyricsInput" rows="6" required
-                    class="w-full rounded-lg border border-gray-300 px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    class="w-full rounded-lg border border-gray-300 px-2 py-2 text-2xl focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="Type or paste Indonesian lyrics..."></textarea>
                 <br>
                 <button type="submit"
-                    class="text-white bg-blue-700 hover:bg-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
+                    class="text-white bg-blue-700 hover:bg-blue-800 font-medium rounded-lg text-2xl px-5 py-2.5 text-center">
                     Predict Age Group
                 </button>
             </form>
@@ -82,7 +81,7 @@
     </div>
 </main>
 <footer class="flex flex-row justify-center items-center">
-    <div class="absolute bottom-4 text-gray-500">By Michael Natanael</div>
+    <div class="mb-5 text-gray-500">By Michael Natanael</div>
 </footer>
 {% endblock %}
 

@@ -5,42 +5,48 @@
 {% endblock %}
 
 {% block body %}
-<main class="flex justify-center items-center min-h-screen">
+<main class="flex flex-row justify-center items-center min-h-screen">
     <div class="container max-w-xl w-full bg-white rounded-2xl shadow-lg p-8 text-center space-y-6">
 
-        <!-- Lyric -->
-        <div>
-            <h1 class="text-lg font-semibold text-gray-700 sm:text-xl mb-2">🎵 Lyric</h1>
-            <p class="text-2xl font-bold text-blue-600 break-words">{{ task }}</p>
+        <!-- Lyrics -->
+        <div class="mb-5">
+            <h1 class="text-lg font-semibold text-gray-800 sm:text-xl">🎵 Lyrics</h1>
+            <p class="text-center px-2 py-2 text-1xl sm:text-lg">{{ task }}</p>
         </div>
+
+        <hr class="my-12 h-0.5 border-t-0 bg-neutral-100 dark:bg-white/10" />
 
         <!-- Predicted Age Group -->
         <div class="mt-4 mb-5">
-            <h2 class="text-xl font-semibold text-gray-800">Predicted Age Group</h2>
-            <span class="inline-block mt-1 px-3 py-1 bg-green-100 text-green-800 text-sm font-medium rounded-full">
+            <h2 class="text-lg font-semibold text-gray-800">Predicted Age Group</h2>
+            <span class="text-center text-lg font-extrabold text-slate-900 sm:text-2xl">
                 {{ prediction }}
             </span>
         </div>
 
+        <hr class="my-12 h-0.5 border-t-0 bg-neutral-100 dark:bg-white/10" />
+
         <!-- Class Probabilities -->
         <div class="mt-4 mb-5 flex flex-col text-center items-center">
-            <h3 class="text-md font-semibold text-gray-700 mb-2">📊 Class Probabilities</h3>
+            <h3 class="text-lg font-semibold text-gray-800 mb-2">📊 Class Probabilities</h3>
             <div class="space-y-3">
                 <table>
                     {% for label, prob in probabilities %}
-                    <tr>
-                        <td class="text-left">
-                            <span class="capitalize text-gray-600">{{ label }}</span>
+                    <tr class="{{ 'bg-green-500' if label == prediction else '' }}">
+                        <td class="px-2 text-left">
+                            <span class="capitalize text-gray-600 text-1xl sm:text-lg {{ 'font-medium' if label == prediction else '' }}">{{ label }}</span>
                         </td>
                         <td class="px-5"></td>
-                        <td class="text-right">
-                            <span class="font-medium text-gray-800">{{ prob }}</span>
+                        <td class="px-2 text-right">
+                            <span class="text-gray-800 text-1xl sm:text-lg {{ 'font-medium' if label == prediction else '' }}">{{ prob }}</span>
                         </td>
                     </tr>
                     {% endfor %}
                 </table>
             </div>
         </div>
+
+        <hr class="my-12 h-0.5 border-t-0 bg-neutral-100 dark:bg-white/10" />
 
         <!-- Processing Time -->
         {% if total_time %}
@@ -52,13 +58,13 @@
         <!-- Action Button -->
         <div class="w-full flex flex-col my-2 overflow-y-auto"></div>
         <div class="mt-4">
-            <a href="/" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg">
-                🔁 Try Another Lyric
+            <a href="/" class="bg-blue-700 hover:bg-blue-800 text-white font-medium py-2 px-4 rounded-lg text-2xl">
+                🔁 Try Another Lyrics
             </a>
         </div>
     </div>
 </main>
 <footer class="flex flex-row justify-center items-center">
-    <div class="absolute bottom-4 text-gray-500">By Michael Natanael</div>
+    <div class="mb-5 text-gray-500">By Michael Natanael</div>
 </footer>
 {% endblock %}
