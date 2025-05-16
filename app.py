@@ -86,6 +86,7 @@ def bert_predict(input_lyric):
         input_lyric,
         add_special_tokens=True,
         max_length=512,
+        truncation=True,    # Ensures input ≤512 tokens
         return_token_type_ids=True,
         padding="max_length",
         return_attention_mask=True,
