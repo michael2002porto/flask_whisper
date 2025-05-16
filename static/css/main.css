@@ -1,36 +1,46 @@
-body, html {
-    margin: 0;
-    font-family: sans-serif;
-    background-color: lightblue;
+/* Custom Container Styles */
+.container {
+    max-width: 90vw;
+    margin-top: 3rem;
+    margin-bottom: 3rem;
 }
 
-.content {
-    margin: 0 auto;
-    width: 400px;
+@media (min-width: 1280px) {
+  .container {
+    max-width: 80vw;
+  }
 }
 
-table, td, th {
-    border: 1px solid #aaa;
+/* Audio Control Customization */
+audio::-webkit-media-controls-panel {
+    background-color: white;
 }
 
-table {
-    border-collapse: collapse;
-    width: 100%;
+/* Custom Animation */
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
 }
 
-th {
-    height: 30px;
+.animate-spin {
+    animation: spin 1s linear infinite;
 }
 
-td {
-    text-align: center;
-    padding: 5px;
+/* Additional Custom Utilities */
+.min-h-screen {
+    min-height: 90vh;
 }
 
-.form {
-    margin-top: 20px;
-}
+/* Responsive Text Sizes */
+@media (min-width: 640px) {
+    .sm\:text-2xl {
+        font-size: 1.5rem;
+        line-height: 2rem;
+    }
 
-#content {
-    width: 70%;
+    .sm\:text-7xl {
+        font-size: 4.5rem;
+        line-height: 1;
+    }
 }

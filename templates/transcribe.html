@@ -6,35 +6,35 @@
 
 {% block body %}
 <main class="flex flex-row justify-center items-center min-h-screen">
-    <div class="container max-w-xl w-full bg-white rounded-2xl shadow-lg p-8 text-center space-y-6">
+    <div class="container max-w-xl w-full bg-white rounded-2xl p-8 text-center space-y-6">
 
         <!-- Lyrics -->
-        <div class="mb-5">
+        <div class="mb-3">
             <h1 class="text-lg font-semibold text-gray-800 sm:text-xl">🎵 Lyrics</h1>
             <p class="text-center px-2 py-2 text-1xl sm:text-lg">{{ task }}</p>
         </div>
 
-        <hr class="my-12 h-0.5 border-t-0 bg-neutral-100 dark:bg-white/10" />
+        <hr class="mb-3 border-t border-gray-200" />
 
         <!-- Predicted Age Group -->
-        <div class="mt-4 mb-5">
+        <div class="mt-2 mb-3">
             <h2 class="text-lg font-semibold text-gray-800">Predicted Age Group</h2>
             <span class="text-center text-lg font-extrabold text-slate-900 sm:text-2xl">
                 {{ prediction.upper() }}
             </span>
         </div>
 
-        <hr class="my-12 h-0.5 border-t-0 bg-neutral-100 dark:bg-white/10" />
+        <hr class="border-t border-gray-200" />
 
         <!-- Class Probabilities -->
-        <div class="mt-4 mb-5 flex flex-col text-center items-center">
+        <div class="mt-2 mb-3 flex flex-col text-center items-center">
             <h3 class="text-lg font-semibold text-gray-800 mb-2">📊 Class Probabilities</h3>
             <div class="space-y-3">
                 <table>
                     {% for label, prob in probabilities %}
                     <tr class="{{ 'bg-green-500' if label == prediction else '' }}">
                         <td class="px-2 text-left">
-                            <span class="capitalize text-gray-600 text-1xl sm:text-lg {{ 'font-medium' if label == prediction else '' }}">{{ label.capitalize() }}</span>
+                            <span class="capitalize text-gray-800 text-1xl sm:text-lg {{ 'font-medium' if label == prediction else '' }}">{{ label.capitalize() }}</span>
                         </td>
                         <td class="px-5"></td>
                         <td class="px-2 text-right">
@@ -46,25 +46,25 @@
             </div>
         </div>
 
-        <hr class="my-12 h-0.5 border-t-0 bg-neutral-100 dark:bg-white/10" />
+        <hr class="border-t border-gray-200" />
 
         <!-- Processing Time -->
         {% if total_time %}
-        <div class="mt-4 mb-5 text-gray-500">
+        <div class="text-sm mt-2 mb-3 text-gray-500">
             ⏱️ Total Processing Time: <strong>{{ total_time }}</strong>
         </div>
         {% endif %}
 
         <!-- Action Button -->
-        <div class="w-full flex flex-col my-2 overflow-y-auto"></div>
-        <div class="mt-4">
-            <a href="/" class="bg-blue-700 hover:bg-blue-800 text-white font-medium py-2 px-4 rounded-lg text-2xl">
+        <div class="w-full flex flex-col mb-5 overflow-y-auto"></div>
+        <div class="mt-2">
+            <a href="/" class="text-white bg-blue-700 hover:bg-blue-800 font-medium rounded-lg text-1xl sm:text-lg px-5 py-2.5 text-center">
                 🔁 Try Another Lyrics
             </a>
         </div>
     </div>
 </main>
 <footer class="flex flex-row justify-center items-center">
-    <div class="mb-5 text-gray-500">By Michael Natanael</div>
+    <div class="mb-3 text-gray-500">By Michael Natanael</div>
 </footer>
 {% endblock %}
