@@ -20,7 +20,7 @@
         <div class="mt-4 mb-5">
             <h2 class="text-lg font-semibold text-gray-800">Predicted Age Group</h2>
             <span class="text-center text-lg font-extrabold text-slate-900 sm:text-2xl">
-                {{ prediction }}
+                {{ prediction.upper() }}
             </span>
         </div>
 
@@ -34,7 +34,7 @@
                     {% for label, prob in probabilities %}
                     <tr class="{{ 'bg-green-500' if label == prediction else '' }}">
                         <td class="px-2 text-left">
-                            <span class="capitalize text-gray-600 text-1xl sm:text-lg {{ 'font-medium' if label == prediction else '' }}">{{ label }}</span>
+                            <span class="capitalize text-gray-600 text-1xl sm:text-lg {{ 'font-medium' if label == prediction else '' }}">{{ label.capitalize() }}</span>
                         </td>
                         <td class="px-5"></td>
                         <td class="px-2 text-right">
