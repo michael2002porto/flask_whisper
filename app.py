@@ -19,6 +19,7 @@ import requests
 from tqdm import tqdm
 from transformers import BertTokenizer
 from model.multi_class_model import MultiClassModel
+
 # from model.database import db, User
 from sqlalchemy.exc import OperationalError
 from sqlalchemy import inspect
@@ -54,7 +55,7 @@ def show_schema_info():
     # Get current schema (by default it's 'public' unless set explicitly)
     current_schema = db.engine.url.database
     all_schemas = inspector.get_schema_names()
-    public_tables = inspector.get_table_names(schema='public')
+    public_tables = inspector.get_table_names(schema="public")
 
     return {
         "current_schema": current_schema,
@@ -279,9 +280,25 @@ def register():
     if request.method == "POST":
         email = request.form.get("email")
         password = request.form.get("password")
+        confirm_password = request.form.get("confirm-password")
 
         if User.query.filter_by(email=email).first():
-            return render_template("register.html", error="Email already taken!")
+            return render_template(
+                "register.html",
+                error="Email already taken!",
+                email=email,
+                password=password,
+                confirm_password=confirm_password,
+            )
+
+        if password != confirm_password:
+            return render_template(
+                "register.html",
+                error="Password does not match!",
+                email=email,
+                password=password,
+                confirm_password=confirm_password,
+            )
 
         hashed_password = generate_password_hash(password, method="pbkdf2:sha256")
 
@@ -304,24 +321,30 @@ def login():
 
         if user and check_password_hash(user.password, password):
             login_user(user)
-            return redirect(url_for("dashboard"))
+            return dashboard(login_alert=True)
         else:
             return render_template("login.html", error="Invalid email or password")
 
     return render_template("login.html")
 
 
-@app.route("/dashboard")
-@login_required
-def dashboard():
-    return render_template("dashboard.html", email=current_user.email)
+def dashboard(login_alert=False):
+    if login_alert:
+        print('test')
+        return render_template("index.html", email=current_user.email)
+    return redirect(url_for("index"))
 
 
 @app.route("/logout")
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for("index"))
+    return redirect(url_for("login"))
+
+
+@app.route("/history", methods=["GET"])
+def history():
+    return render_template("index.html")
 
 
 if __name__ == "__main__":
