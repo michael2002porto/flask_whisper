@@ -342,9 +342,10 @@ def logout():
     return redirect(url_for("login"))
 
 
-@app.route("/history", methods=["GET"])
+@app.route("/history")
+@login_required
 def history():
-    return render_template("index.html")
+    return render_template("history.html")
 
 
 if __name__ == "__main__":
