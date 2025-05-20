@@ -135,9 +135,18 @@
 
     // Handle audio recording
     document.getElementById("recordButton").addEventListener("click", async function () {
+        const submitButtons = document.querySelectorAll('form button[type="submit"]');
+        const uploadButton = document.getElementById('uploadButton');
+        const textArea = document.getElementById('lyricsInput');
         if (!mediaRecorder || mediaRecorder.state === "inactive") {
+            submitButtons.forEach(btn => btn.disabled = true);
+            uploadButton.disabled = true;
+            textArea.disabled = true;
             startRecording();
         } else {
+            submitButtons.forEach(btn => btn.disabled = false);
+            uploadButton.disabled = false;
+            textArea.disabled = false;
             stopRecording();
         }
     });
@@ -190,6 +199,10 @@
 
         mediaRecorder.start();
         startTimer();
+
+        // Highlight recording
+        const recordBtn = document.getElementById("recordButton");
+        recordBtn.classList.add("recording-active");
         document.getElementById("recordText").innerHTML = "Stop Recording (00:00)";
     }
 
@@ -206,6 +219,10 @@
 
     function stopRecording() {
         mediaRecorder.stop();
+
+        // Remove highlight
+        const recordBtn = document.getElementById("recordButton");
+        recordBtn.classList.remove("recording-active");
         document.getElementById("recordText").innerHTML = "Record";
     }
 

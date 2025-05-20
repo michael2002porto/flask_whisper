@@ -6,9 +6,9 @@
 }
 
 @media (min-width: 1280px) {
-  .container {
-    max-width: 80vw;
-  }
+    .container {
+        max-width: 80vw;
+    }
 }
 
 /* Audio Control Customization */
@@ -42,5 +42,26 @@ audio::-webkit-media-controls-panel {
     .sm\:text-7xl {
         font-size: 4.5rem;
         line-height: 1;
+    }
+}
+
+.recording-active {
+    background-color: #dc2626 !important;
+    /* Tailwind's red-600 */
+    color: white !important;
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7);
+    }
+
+    70% {
+        box-shadow: 0 0 0 10px rgba(220, 38, 38, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(220, 38, 38, 0);
     }
 }
