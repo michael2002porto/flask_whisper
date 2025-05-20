@@ -1,4 +1,12 @@
-from flask import Flask, render_template, request, url_for, redirect
+from flask import (
+    Flask,
+    render_template,
+    request,
+    url_for,
+    redirect,
+    flash,
+    get_flashed_messages,
+)
 from flask_login import (
     LoginManager,
     login_user,
@@ -338,6 +346,9 @@ def register():
         db.session.add(new_user)
         db.session.commit()
 
+        flash(
+            "Sign up successful! Please log in.", "success"
+        )  # Flash the success message
         return redirect(url_for("login"))
 
     return render_template("register.html")
