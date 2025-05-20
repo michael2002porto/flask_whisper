@@ -12,6 +12,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from faster_whisper import WhisperModel
 import tempfile
 import os
+import datetime
 import time
 import torch
 import numpy as np
@@ -69,8 +70,8 @@ class User(db.Model, UserMixin):
 
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(255), nullable=False)
-    password = db.Column(db.String(255))  # Can be NULL
-    created_date = db.Column(db.DateTime)
+    password = db.Column(db.String(255))
+    created_date = db.Column(db.DateTime, default=datetime.datetime.now())
 
     history = db.relationship("History", backref="user", lazy=True)
 
@@ -79,7 +80,7 @@ class History(db.Model):
     __tablename__ = "history"
 
     id = db.Column(db.Integer, primary_key=True)
-    lyric = db.Column(db.String(255), nullable=False)
+    lyric = db.Column(db.Text, nullable=False)
     predicted_label = db.Column(db.String(255), nullable=False)
 
     children_prob = db.Column(db.Float)
@@ -88,7 +89,7 @@ class History(db.Model):
     all_ages_prob = db.Column(db.Float)
 
     processing_time = db.Column(db.Time)
-    created_date = db.Column(db.DateTime)
+    created_date = db.Column(db.DateTime, default=datetime.datetime.now())
 
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
 
@@ -220,7 +221,7 @@ def transcribe():
                 temp_audio_path = temp_audio.name
 
             # Step 1: Transcribe
-            transcribed_text = faster_whisper(temp_audio_path)
+            transcribed_text = faster_whisper(temp_audio_path).strip()
             os.remove(temp_audio_path)
 
             # Step 2: BERT Prediction
@@ -230,6 +231,20 @@ def transcribe():
             end_time = time.time()
             total_time = end_time - start_time
             formatted_time = f"{total_time:.2f} seconds"
+
+            # Insert log prediction
+            new_prediction_history = History(
+                lyric=transcribed_text,
+                predicted_label=predicted_label,
+                children_prob=prob_results[AGE_LABELS.index("anak")][1],
+                adolescents_prob=prob_results[AGE_LABELS.index("remaja")][1],
+                adults_prob=prob_results[AGE_LABELS.index("dewasa")][1],
+                all_ages_prob=prob_results[AGE_LABELS.index("semua usia")][1],
+                processing_time=round(total_time, 2),
+                user_id=current_user.id if current_user.is_authenticated else None,
+            )
+            db.session.add(new_prediction_history)
+            db.session.commit()
 
             return render_template(
                 "transcribe.html",
@@ -260,14 +275,29 @@ def predict_text():
 
         # End timer
         end_time = time.time()
-        total_time = f"{end_time - start_time:.2f} seconds"
+        total_time = end_time - start_time
+        formatted_time = f"{total_time:.2f} seconds"
+
+        # Insert log prediction
+        new_prediction_history = History(
+            lyric=user_lyrics,
+            predicted_label=predicted_label,
+            children_prob=prob_results[AGE_LABELS.index("anak")][1],
+            adolescents_prob=prob_results[AGE_LABELS.index("remaja")][1],
+            adults_prob=prob_results[AGE_LABELS.index("dewasa")][1],
+            all_ages_prob=prob_results[AGE_LABELS.index("semua usia")][1],
+            processing_time=round(total_time, 2),
+            user_id=current_user.id if current_user.is_authenticated else None,
+        )
+        db.session.add(new_prediction_history)
+        db.session.commit()
 
         return render_template(
             "transcribe.html",
             task=user_lyrics,
             prediction=predicted_label,
             probabilities=prob_results,
-            total_time=total_time,
+            total_time=formatted_time,
         )
 
     except Exception as e:
@@ -330,7 +360,6 @@ def login():
 
 def dashboard(login_alert=False):
     if login_alert:
-        print('test')
         return render_template("index.html", email=current_user.email)
     return redirect(url_for("index"))
 
@@ -345,6 +374,8 @@ def logout():
 @app.route("/history")
 @login_required
 def history():
+    print(current_user.id)
+    History.query.filter_by(user_id=current_user.id)
     return render_template("history.html")
 
 

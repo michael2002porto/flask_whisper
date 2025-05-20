@@ -7,7 +7,10 @@
 {% block body %}
 {% include 'navbar.html' %}
 <main class="flex flex-row justify-center items-center min-h-screen">
-    <div class="container max-w-xl w-full bg-white rounded-2xl p-8 text-center space-y-6">
+    <div class="container max-w-xl w-full bg-white rounded-2xl text-center space-y-6">
+        <div class="flex items-center justify-between p-4 bg-gray-100">
+            <h5 class="text-md font-bold text-gray-700 md:text-md uppercase">Prediction History</h5>
+        </div>
         <table id="export-table">
             <thead>
                 <tr>
@@ -223,7 +226,7 @@
                 // Create a link to trigger the download
                 const link = document.createElement("a");
                 link.href = encodeURI("data:text/csv;charset=utf-8," + str);
-                link.download = (options.filename || "datatable_export") + ".txt";
+                link.download = (options.filename || "Prediction History") + ".txt";
                 // Append the link
                 document.body.appendChild(link);
                 // Trigger the download
