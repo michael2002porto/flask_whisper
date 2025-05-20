@@ -373,7 +373,7 @@ def login():
 
 def dashboard(login_alert=False):
     if login_alert:
-        return render_template("index.html", email=current_user.email)
+        flash(current_user.email, "success")
     return redirect(url_for("index"))
 
 
