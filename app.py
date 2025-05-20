@@ -374,9 +374,12 @@ def logout():
 @app.route("/history")
 @login_required
 def history():
-    print(current_user.id)
-    History.query.filter_by(user_id=current_user.id)
-    return render_template("history.html")
+    data_history = (
+        History.query.filter_by(user_id=current_user.id)
+        .order_by(History.created_date.desc())
+        .all()
+    )
+    return render_template("history.html", data_history=data_history)
 
 
 if __name__ == "__main__":
