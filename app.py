@@ -31,7 +31,7 @@ app = Flask(__name__)
 # CHECKPOINT_URL = "https://github.com/michael2002porto/bert_classification_indonesian_song_lyrics/releases/download/finetuned_checkpoints/original_split_synthesized.ckpt"
 CHECKPOINT_URL = "https://huggingface.co/nenafem/original_split_synthesized/resolve/main/original_split_synthesized.ckpt?download=true"
 CHECKPOINT_PATH = "final_checkpoint/original_split_synthesized.ckpt"
-AGE_LABELS = ["semua usia", "anak", "remaja", "dewasa"]
+AGE_LABELS = ["anak", "remaja", "dewasa", "semua usia"]
 DATABASE_URI = "postgresql://postgres.tcqmmongiztvqkxxebnc:I1Nnj0H72Z3mXWcp@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres"
 
 # === CONNECT DATABASE ===
@@ -88,7 +88,7 @@ class History(db.Model):
     adults_prob = db.Column(db.Float)
     all_ages_prob = db.Column(db.Float)
 
-    processing_time = db.Column(db.Float)   # store duration in seconds
+    processing_time = db.Column(db.Float)  # store duration in seconds
     created_date = db.Column(db.DateTime, default=datetime.datetime.now)
     speech_to_text = db.Column(db.Boolean)
 
@@ -381,6 +381,15 @@ def history():
         .order_by(History.created_date.desc())
         .all()
     )
+
+    for item in data_history:
+        item.probabilities = [
+            ("anak", f"{item.children_prob:.4f}"),
+            ("remaja", f"{item.adolescents_prob:.4f}"),
+            ("dewasa", f"{item.adults_prob:.4f}"),
+            ("semua usia", f"{item.all_ages_prob:.4f}"),
+        ]
+
     return render_template("history.html", data_history=data_history)
 
 
