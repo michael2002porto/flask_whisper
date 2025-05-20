@@ -88,8 +88,9 @@ class History(db.Model):
     adults_prob = db.Column(db.Float)
     all_ages_prob = db.Column(db.Float)
 
-    processing_time = db.Column(db.Time)
-    created_date = db.Column(db.DateTime, default=datetime.datetime.now())
+    processing_time = db.Column(db.Float)   # store duration in seconds
+    created_date = db.Column(db.DateTime, default=datetime.datetime.now)
+    speech_to_text = db.Column(db.Boolean)
 
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
 
@@ -241,6 +242,7 @@ def transcribe():
                 adults_prob=prob_results[AGE_LABELS.index("dewasa")][1],
                 all_ages_prob=prob_results[AGE_LABELS.index("semua usia")][1],
                 processing_time=round(total_time, 2),
+                speech_to_text=True,
                 user_id=current_user.id if current_user.is_authenticated else None,
             )
             db.session.add(new_prediction_history)
