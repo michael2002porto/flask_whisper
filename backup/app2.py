@@ -18,7 +18,6 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from faster_whisper import WhisperModel
-from groq import Groq
 import tempfile
 import os
 import datetime
@@ -133,9 +132,6 @@ def download_checkpoint_if_needed(url, save_path):
 print(show_schema_info())
 download_checkpoint_if_needed(CHECKPOINT_URL, CHECKPOINT_PATH)
 
-# Load groq
-client = Groq(api_key="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")
-
 # Load tokenizer
 tokenizer = BertTokenizer.from_pretrained("indolem/indobert-base-uncased")
 
@@ -234,17 +230,7 @@ def transcribe():
                 temp_audio_path = temp_audio.name
 
             # Step 1: Transcribe
-            # transcribed_text = faster_whisper(temp_audio_path).strip()
-            with open(temp_audio_path, "rb") as file:
-                transcription = client.audio.transcriptions.create(
-                    file=(temp_audio_path, file.read()),
-                    model="whisper-large-v3",
-                    prompt="Transkripsikan hanya bagian lirik lagu saja",
-                    language="id",
-                    response_format="verbose_json",
-                    temperature=0,
-                )
-            transcribed_text = transcription.text.strip()
+            transcribed_text = faster_whisper(temp_audio_path).strip()
             os.remove(temp_audio_path)
 
             # Step 2: BERT Prediction
