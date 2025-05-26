@@ -8,6 +8,8 @@
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link href="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='img/black-song.svg') }}" media="(prefers-color-scheme: light)">
+    <link rel="icon" href="{{ url_for('static', filename='img/white-song.svg') }}" media="(prefers-color-scheme: dark)">
     {% block head %}{% endblock %}
 </head>
 
