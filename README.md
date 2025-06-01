@@ -1,6 +1,6 @@
-# FlaskIntroduction
+# Indonesian Lyrics Classification By Age Group
 
-> This repository has been archived and is no longer being updated.
+AGE_LABELS = ["semua usia", "anak", "remaja", "dewasa"]
 
 ## How To Run
 1. Install `virtualenv`:

@@ -40,7 +40,7 @@ app = Flask(__name__)
 # CHECKPOINT_URL = "https://github.com/michael2002porto/bert_classification_indonesian_song_lyrics/releases/download/finetuned_checkpoints/original_split_synthesized.ckpt"
 CHECKPOINT_URL = "https://huggingface.co/nenafem/original_split_synthesized/resolve/main/original_split_synthesized.ckpt?download=true"
 CHECKPOINT_PATH = "final_checkpoint/original_split_synthesized.ckpt"
-AGE_LABELS = ["anak", "remaja", "dewasa", "semua usia"]
+AGE_LABELS = ["semua usia", "anak", "remaja", "dewasa"]
 DATABASE_URI = "postgresql://postgres.tcqmmongiztvqkxxebnc:I1Nnj0H72Z3mXWcp@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres"
 
 # === CONNECT DATABASE ===
