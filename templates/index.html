@@ -126,8 +126,30 @@
     });
 
     document.getElementById("fileInput").addEventListener("change", function (event) {
+        const file = event.target.files[0];
+        const validTypes = ["audio/mpeg"];
+
+        // 1. Check if file exists
+        if (!file) {
+            alert("Please select a file first");
+            return;
+        }
+
+        // 2. Validate file type
+        if (!validTypes.includes(file.type)) {
+            alert("Invalid file type. Please upload MP3 file");
+            return;
+        }
+
+        // 3. Validate file size (max 10MB)
+        const maxSize = 10 * 1024 * 1024; // 10MB
+        if (file.size > maxSize) {
+            alert("File too large. Maximum size is 10MB");
+            return;
+        }
+
+        // 4. Create audio player
         if (event.target.files.length > 0) {
-            let file = event.target.files[0];
             let fileURL = URL.createObjectURL(file);
             updateAudioPlayer(fileURL);
         }
